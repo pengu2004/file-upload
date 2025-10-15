@@ -1,0 +1,43 @@
+<html>
+    <p>Hello</p>
+    <input type="file" id="file" />
+    <button id="upload">Upload</button>
+    <small id="status"></small>
+    <script>
+        const file = document.getElementById("file");
+        const upload = document.getElementById("upload");
+        const status = document.getElementById("status");
+
+        upload.addEventListener("click", () => {
+            status.innerHTML = "uploading..";
+            console.log(file.files[0]);
+            const fileReader = new FileReader();
+            fileReader.readAsArrayBuffer(file.files[0]);
+
+            fileReader.onload = async (e) => {
+                console.log(e.target.result);
+                const content = e.target.result;
+                const CHUNK_SIZE = 5000;
+                const totalChunks = Math.ceil(content.byteLength / CHUNK_SIZE);
+                console.log(e.target.result.byteLength);
+                const fileName = file.files[0].name;
+                for (let chunk = 0; chunk < totalChunks + 1; chunk++) {
+                    let CHUNK = content.slice(
+                        chunk * CHUNK_SIZE,
+                        (chunk + 1) * CHUNK_SIZE,
+                    );
+                    console.log(CHUNK);
+                    await fetch("/upload?fileName=" + fileName, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/octet-stream",
+                            "Content-Length": CHUNK.byteLength,
+                        },
+                        body: CHUNK,
+                    });
+                }
+                status.innerHTML = "Uploaded";
+            };
+        });
+    </script>
+</html>
